@@ -58,3 +58,14 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.0-build-${{ github.run_number }}
+          name: Folia Android build ${{ github.run_number }}
+          body: |
+            Automated Android APK build from the main branch.
+
+            This is a debug APK for testing, not a production-signed release.
+          prerelease: true
+          files: android/app/build/outputs/apk/debug/app-debug.apk
