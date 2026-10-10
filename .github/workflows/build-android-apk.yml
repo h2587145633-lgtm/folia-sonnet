@@ -41,6 +41,8 @@ jobs:
         run: cp .env.example .env.local
 
       - name: Build web app and sync Android
+        env:
+          VITE_NETEASE_API_BASE: https://api-vercel-init-sigma.vercel.app
         run: npm run cap:sync:android
 
       - name: Build APK
