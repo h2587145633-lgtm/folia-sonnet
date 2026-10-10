@@ -1,0 +1,73 @@
+
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Check Xcode
+        run: xcodebuild -version
+
+      - name: Prepare environment
+        run: cp .env.example .env.local
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Capacitor iOS
+        run: npm install --no-save --package-lock=false @capacitor/ios@8.4.2
+
+      - name: Build web app
+        env:
+          VITE_NETEASE_API_BASE: https://api-vercel-init-sigma.vercel.app
+        run: npm run build:capacitor
+
+      - name: Generate iOS project
+        run: |
+          npx cap add ios --packagemanager SPM
+          npx cap sync ios
+
+      - name: Build iOS archive
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath "$RUNNER_TEMP/Folia.xcarchive" \
+            archive CODE_SIGNING_ALLOWED=NO
+
+      - name: Package unsigned IPA
+        run: |
+          APP_PATH="$RUNNER_TEMP/Folia.xcarchive/Products/Applications/App.app"
+          test -d "$APP_PATH"
+          mkdir -p "$RUNNER_TEMP/ipa/Payload"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/ipa/Payload/App.app"
+          cd "$RUNNER_TEMP/ipa"
+          zip -qry "$GITHUB_WORKSPACE/Folia-unsigned.ipa" Payload
+          test -s "$GITHUB_WORKSPACE/Folia-unsigned.ipa"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: folia-ios-unsigned-ipa
+          path: Folia-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 7
