@@ -34,14 +34,6 @@ body {
   --folia-safe-area-left: env(safe-area-inset-left, 0px);
 }
 
-html[data-runtime='capacitor-android'] .fixed.inset-0 {
-  top: var(--folia-safe-area-top);
-  right: var(--folia-safe-area-right);
-  bottom: var(--folia-safe-area-bottom);
-  left: var(--folia-safe-area-left);
-  width: auto;
-  height: auto;
-}
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
